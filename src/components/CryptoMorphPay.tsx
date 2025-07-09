@@ -3,33 +3,29 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useWalletClient } from 'wagmi';
 import {
   encodeFunctionData,
+  parseUnits,
   parseEther,
-  createPublicClient,
-  http,
+  Abi
 } from "viem";
 import { morphHolesky } from "viem/chains";
 
 const USDT_ADDRESS = "0x07d9b60c7F719994c07C96a7f87460a0cC94379F";
 const USDC_ADDRESS = "0xe3B620B1557696DA5324EFcA934Ea6c27ad69e00";
-const ERC20_ABI = [
+
+const ERC20_ABI: Abi = [
   {
-    "constant": false,
-    "inputs": [
-      { "name": "_to", "type": "address" },
-      { "name": "_value", "type": "uint256" }
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: '_to', type: 'address' },
+      { name: '_value', type: 'uint256' }
     ],
-    "name": "transfer",
-    "outputs": [{ "name": "", "type": "bool" }],
-    "type": "function"
+    outputs: [
+      { name: '', type: 'bool' }
+    ]
   }
 ];
-
-const getPublicClient = () => {
-  return createPublicClient({
-    chain: morphHolesky,
-    transport: http(),
-  });
-};
 
 export type CryptomorphPayProps = {
   address: string; // merchant address
@@ -61,10 +57,11 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       setError("Please connect your wallet.");
       return;
     }
+
     setIsPending(true);
     try {
-      const publicClient = getPublicClient();
       let hash: string;
+
       if (currency === "ETH") {
         hash = await walletClient.sendTransaction({
           to: address as `0x${string}`,
@@ -73,11 +70,13 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
         });
       } else if (currency === "USDT" || currency === "USDC") {
         const tokenAddress = currency === "USDT" ? USDT_ADDRESS : USDC_ADDRESS;
+        const decimals = 6; // fixed for USDT/USDC
         const data = encodeFunctionData({
           abi: ERC20_ABI,
           functionName: "transfer",
-          args: [address, BigInt(Math.floor(Number(amount) * 1e6))],
+          args: [address, parseUnits(String(amount), decimals)],
         });
+
         hash = await walletClient.sendTransaction({
           to: tokenAddress as `0x${string}`,
           data,
@@ -86,12 +85,12 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       } else {
         throw new Error("Unsupported currency");
       }
+
       setTxHash(hash);
-      setError(null);
-      onSuccess && onSuccess(hash);
+      onSuccess?.(hash);
     } catch (err: any) {
       setError(err.message || String(err));
-      onError && onError(err);
+      onError?.(err);
     } finally {
       setIsPending(false);
     }
@@ -113,10 +112,14 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
           </Dialog.Description>
           <div className="mb-6">
             {!walletClient ? (
-              <div className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded text-center">Please connect your wallet to continue.</div>
+              <div className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded text-center">
+                Please connect your wallet to continue.
+              </div>
             ) : (
               <>
-                <div className="mb-2 text-sm text-gray-700 dark:text-gray-200">Pay to: <span className="font-mono">{address}</span></div>
+                <div className="mb-2 text-sm text-gray-700 dark:text-gray-200">
+                  Pay to: <span className="font-mono">{address}</span>
+                </div>
                 <button
                   onClick={handlePay}
                   className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
@@ -140,4 +143,4 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       </Dialog.Portal>
     </Dialog.Root>
   );
-}; 
+};
