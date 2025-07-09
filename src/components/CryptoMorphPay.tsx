@@ -29,7 +29,7 @@ const ERC20_ABI: Abi = [
 export type CryptomorphPayProps = {
   address: string; // merchant address
   amount: string | number;
-  currency: "ETH" | "USDT" | "USDC";
+  currency: "ETH" | "USDT" | "USDC" | "USD";
   onSuccess?: (tx: any) => void;
   onError?: (err: any) => void;
   theme?: "light" | "dark";
@@ -48,6 +48,7 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [selectedStable, setSelectedStable] = useState<"USDT" | "USDC">("USDT");
 
   const handlePay = async () => {
     setError(null);
@@ -59,14 +60,15 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
     setIsPending(true);
     try {
       let hash: string;
-      if (currency === "ETH") {
+      let tokenToUse = currency === "USD" ? selectedStable : currency;
+      if (tokenToUse === "ETH") {
         hash = await walletClient.sendTransaction({
           to: address as `0x${string}`,
           value: parseEther(String(amount)),
           chain: morphHolesky,
         });
-      } else if (currency === "USDT" || currency === "USDC") {
-        const tokenAddress = currency === "USDT" ? USDT_ADDRESS : USDC_ADDRESS;
+      } else if (tokenToUse === "USDT" || tokenToUse === "USDC") {
+        const tokenAddress = tokenToUse === "USDT" ? USDT_ADDRESS : USDC_ADDRESS;
         const decimals = 6; // fixed for USDT/USDC
         const data = encodeFunctionData({
           abi: ERC20_ABI,
@@ -111,9 +113,27 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
             backdropFilter: "blur(8px)",
           }}
         >
-          <div className="text-xl font-bold text-white mb-2">Pay {amount} {currency}</div>
+          <div className="text-xl font-bold text-white mb-2">Pay {amount} {currency === 'USD' ? selectedStable : currency}</div>
           <div className="mb-4 text-green-200 text-sm">Complete your payment securely using your connected wallet.</div>
           <div className="mb-2 text-green-300 text-xs font-mono">Pay to:<br />{address}</div>
+          {currency === "USD" && (
+            <div className="mb-4">
+              <label className="block text-green-200 mb-1 font-semibold">Choose stablecoin:</label>
+              <div className="relative">
+                <select
+                  value={selectedStable}
+                  onChange={e => setSelectedStable(e.target.value as "USDT" | "USDC")}
+                  className="w-full rounded-lg border border-green-300 bg-gradient-to-r from-green-100 via-lime-100 to-emerald-100 px-3 py-2 text-green-900 font-semibold focus:outline-none focus:ring-2 focus:ring-green-400 appearance-none shadow-inner"
+                >
+                  <option value="USDT">USDT</option>
+                  <option value="USDC">USDC</option>
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                  ▼
+                </span>
+              </div>
+            </div>
+          )}
           {!walletClient ? (
             <div className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded text-center mb-2">Please connect your wallet to continue.</div>
           ) : (
@@ -122,7 +142,7 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
               className="w-full px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all duration-200 disabled:opacity-60 mt-4"
               disabled={isPending}
             >
-              {isPending ? "Processing..." : `Pay with ${currency}`}
+              {isPending ? "Processing..." : `Pay with ${currency === 'USD' ? selectedStable : currency}`}
             </button>
           )}
           {txHash && (
