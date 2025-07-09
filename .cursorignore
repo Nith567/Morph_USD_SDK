@@ -1,0 +1,9 @@
+# Ignore all files in the dist directory
+dist/
+
+nodemodules/
+# Ignore all .log files
+*.log
+
+# Ignore specific file
+config.json
