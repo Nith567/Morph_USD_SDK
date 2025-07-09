@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
 import { useWalletClient } from 'wagmi';
 import {
   encodeFunctionData,
@@ -57,11 +56,9 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       setError("Please connect your wallet.");
       return;
     }
-
     setIsPending(true);
     try {
       let hash: string;
-
       if (currency === "ETH") {
         hash = await walletClient.sendTransaction({
           to: address as `0x${string}`,
@@ -76,7 +73,6 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
           functionName: "transfer",
           args: [address, parseUnits(String(amount), decimals)],
         });
-
         hash = await walletClient.sendTransaction({
           to: tokenAddress as `0x${string}`,
           data,
@@ -85,7 +81,6 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       } else {
         throw new Error("Unsupported currency");
       }
-
       setTxHash(hash);
       onSuccess?.(hash);
     } catch (err: any) {
@@ -97,50 +92,57 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <button className="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">
-          Pay with morph
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md">
-          <Dialog.Title className="text-lg font-bold mb-4">Pay {amount} {currency}</Dialog.Title>
-          <Dialog.Description className="mb-4 text-gray-500">
-            Complete your payment securely using your connected wallet.
-          </Dialog.Description>
-          <div className="mb-6">
-            {!walletClient ? (
-              <div className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded text-center">
-                Please connect your wallet to continue.
-              </div>
-            ) : (
-              <>
-                <div className="mb-2 text-sm text-gray-700 dark:text-gray-200">
-                  Pay to: <span className="font-mono">{address}</span>
-                </div>
-                <button
-                  onClick={handlePay}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                  disabled={isPending}
-                >
-                  {isPending ? "Processing..." : `Pay with ${currency}`}
-                </button>
-              </>
-            )}
-            {txHash && (
-              <div className="mt-4 text-green-600 break-all">Payment sent! Tx: {txHash}</div>
-            )}
-            {error && (
-              <div className="mt-4 text-red-600 break-all">Error: {error}</div>
-            )}
-          </div>
-          <Dialog.Close asChild>
-            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">✕</button>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <div className="flex flex-col items-center">
+      <button
+        className="px-8 py-3 rounded-lg shadow-lg font-semibold text-lg bg-gradient-to-r from-green-400 via-lime-400 to-emerald-500 text-white hover:from-green-500 hover:to-emerald-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-lime-300 mb-4"
+        onClick={() => setOpen((v) => !v)}
+        style={{ letterSpacing: 1 }}
+      >
+        <span className="inline-flex items-center gap-2">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="inline-block"><circle cx="12" cy="12" r="10" fill="#00FFAA" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">M</text></svg>
+          Pay with Morpho
+        </span>
+      </button>
+      {open && (
+        <div className="w-full max-w-md border border-green-400 rounded-2xl shadow-2xl p-6 animate-fade-in"
+          style={{
+            background: "linear-gradient(135deg, #10151a 80%, #00FFAA 100%)",
+            boxShadow: "0 8px 32px 0 rgba(0,255,170,0.15)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <div className="text-xl font-bold text-white mb-2">Pay {amount} {currency}</div>
+          <div className="mb-4 text-green-200 text-sm">Complete your payment securely using your connected wallet.</div>
+          <div className="mb-2 text-green-300 text-xs font-mono">Pay to:<br />{address}</div>
+          {!walletClient ? (
+            <div className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded text-center mb-2">Please connect your wallet to continue.</div>
+          ) : (
+            <button
+              onClick={handlePay}
+              className="w-full px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all duration-200 disabled:opacity-60 mt-4"
+              disabled={isPending}
+            >
+              {isPending ? "Processing..." : `Pay with ${currency}`}
+            </button>
+          )}
+          {txHash && (
+            <div className="mt-4 text-green-400 break-all text-sm font-mono">
+              Payment sent!{' '}
+              <a
+                href={`https://explorer-holesky.morphl2.io/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-green-300 hover:text-green-200"
+              >
+                View on Explorer ↗
+              </a>
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 text-red-400 break-all text-sm font-mono">Error: {error}</div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
