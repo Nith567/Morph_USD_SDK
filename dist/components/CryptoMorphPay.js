@@ -2,28 +2,24 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useWalletClient } from 'wagmi';
-import { encodeFunctionData, parseEther, createPublicClient, http, } from "viem";
+import { encodeFunctionData, parseUnits, parseEther } from "viem";
 import { morphHolesky } from "viem/chains";
 const USDT_ADDRESS = "0x07d9b60c7F719994c07C96a7f87460a0cC94379F";
 const USDC_ADDRESS = "0xe3B620B1557696DA5324EFcA934Ea6c27ad69e00";
 const ERC20_ABI = [
     {
-        "constant": false,
-        "inputs": [
-            { "name": "_to", "type": "address" },
-            { "name": "_value", "type": "uint256" }
+        type: 'function',
+        name: 'transfer',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: '_to', type: 'address' },
+            { name: '_value', type: 'uint256' }
         ],
-        "name": "transfer",
-        "outputs": [{ "name": "", "type": "bool" }],
-        "type": "function"
+        outputs: [
+            { name: '', type: 'bool' }
+        ]
     }
 ];
-const getPublicClient = () => {
-    return createPublicClient({
-        chain: morphHolesky,
-        transport: http(),
-    });
-};
 export const CryptomorphPay = ({ address, amount, currency = "ETH", onSuccess, onError, theme = "light", }) => {
     const { data: walletClient } = useWalletClient();
     const [open, setOpen] = useState(false);
@@ -39,7 +35,6 @@ export const CryptomorphPay = ({ address, amount, currency = "ETH", onSuccess, o
         }
         setIsPending(true);
         try {
-            const publicClient = getPublicClient();
             let hash;
             if (currency === "ETH") {
                 hash = await walletClient.sendTransaction({
@@ -50,10 +45,11 @@ export const CryptomorphPay = ({ address, amount, currency = "ETH", onSuccess, o
             }
             else if (currency === "USDT" || currency === "USDC") {
                 const tokenAddress = currency === "USDT" ? USDT_ADDRESS : USDC_ADDRESS;
+                const decimals = 6; // fixed for USDT/USDC
                 const data = encodeFunctionData({
                     abi: ERC20_ABI,
                     functionName: "transfer",
-                    args: [address, BigInt(Math.floor(Number(amount) * 1e6))],
+                    args: [address, parseUnits(String(amount), decimals)],
                 });
                 hash = await walletClient.sendTransaction({
                     to: tokenAddress,
@@ -65,12 +61,11 @@ export const CryptomorphPay = ({ address, amount, currency = "ETH", onSuccess, o
                 throw new Error("Unsupported currency");
             }
             setTxHash(hash);
-            setError(null);
-            onSuccess && onSuccess(hash);
+            onSuccess?.(hash);
         }
         catch (err) {
             setError(err.message || String(err));
-            onError && onError(err);
+            onError?.(err);
         }
         finally {
             setIsPending(false);
