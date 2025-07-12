@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useWalletClient } from 'wagmi';
 import {
   encodeFunctionData,
@@ -49,6 +49,15 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [selectedStable, setSelectedStable] = useState<"USDT" | "USDC">("USDT");
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setTxHash(null);
+      setError(null);
+      setIsPending(false);
+    }
+  }, [open]);
 
   const handlePay = async () => {
     setError(null);
