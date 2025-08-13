@@ -1,9 +1,9 @@
-# Morpho Stablecoin Checkout SDK
+# Morph Stablecoin Checkout SDK
 
-A hackathon-ready, plug-and-play React component for accepting stablecoin (USDT, USDC, ETH) payments on the Morpho Holesky Testnet. Built for speed, simplicity, and beautiful green Morpho UI.
+A hackathon-ready, plug-and-play React component for accepting stablecoin (USDT, USDC, ETH) payments on the Morph Holesky Testnet. Built for speed, simplicity, and beautiful green Morph UI.
 
 ## 🚀 Features
-- Accept payments in **USDT**, **USDC**, or **ETH** on Morpho Holesky
+- Accept payments in **USDT**, **USDC**, or **ETH** on Morph Holesky
 - **"USD"** mode lets users pick USDT or USDC at checkout
 - Fully self-contained React component
 - Easy integration 
@@ -33,3 +33,7 @@ import { CryptomorphPay } from 'morph-stablecoin-checkout';
 - USDT (0x07d9b60c7F719994c07C96a7f87460a0cC94379F)
 - USDC (0xe3B620B1557696DA5324EFcA934Ea6c27ad69e00)
 - ETH (native)
+
+
+## Example
+

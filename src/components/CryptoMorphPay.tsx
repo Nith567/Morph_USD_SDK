@@ -116,7 +116,7 @@ export const CryptomorphPay: React.FC<CryptomorphPayProps> = ({
       >
         <span className="inline-flex items-center gap-2">
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="inline-block"><circle cx="12" cy="12" r="10" fill="#00FFAA" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">M</text></svg>
-          Pay with Morpho
+         Morph Pay
         </span>
       </button>
       {open && (
